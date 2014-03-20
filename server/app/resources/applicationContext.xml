@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <context:annotation-config/>
+    <context:component-scan base-package="com.offke.core.messages"/>
+    <context:component-scan base-package="com.offke.core.common.security"/>
+    <context:component-scan base-package="com.offke.core.bu.product.key"/>
+
+    <bean name="configurerValue" class="com.offke.core.common.util.ConfigurerValue"/>
+
+    <!--*****************************************
+     *@BeanName:          propertyConfigurer
+     *@Description:          处理配置文件
+     *@Inject:                   locations
+     ********************************************-->
+    <bean id="propertyConfigurer"
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations" ref="configurerValue"/>
+    </bean>
+
+    <!--*****************************************
+         *@BeanName:          dataSource
+         *@Description:          数据源
+         *@Inject:                   driverClassName
+         *@Inject:                   url
+         *@Inject:                   username
+         *@Inject:                   password
+         ********************************************-->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="maxActive" value="${jdbc.maxActive}"/>
+        <property name="initialSize" value="${jdbc.initialSize}"/>
+        <property name="maxWait" value="${jdbc.maxWait}"/>
+        <property name="minIdle" value="${jdbc.minIdle}"/>
+        <property name="removeAbandoned" value="${jdbc.removeAbandoned}"/>
+        <property name="removeAbandonedTimeout" value="${jdbc.removeAbandonedTimeout}"/>
+        <property name="logAbandoned" value="${jdbc.logAbandoned}"/>
+        <property name="validationQuery" value="${jdbc.validationQuery}"/>
+        <property name="testOnBorrow" value="${jdbc.testOnBorrow}"/>
+    </bean>
+
+    <!--*****************************************
+     *@BeanName:          sessionFactory
+     *@Description:          Hibernate会话工厂
+     *@Inject:                   dataSource
+     *@Inject:                   hibernateProperties
+     *@Inject:                   packagesToScan
+     ********************************************-->
+    <bean id="sessionFactory"
+          class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">
+                    org.hibernate.dialect.Oracle10gDialect
+                </prop>
+                <prop key="hibernate.show_sql">${app.debug}</prop>
+                <prop key="hibernate.format_sql">${app.debug}</prop>
+            </props>
+        </property>
+        <property name="packagesToScan">
+            <list>
+                <value>com.offke.core.bu.struct.entity</value>
+            </list>
+        </property>
+    </bean>
+
+    <!--*****************************************
+     *@BeanName:          jdbcTemplate
+     *@Description:          jdbcTemplate
+     *@Inject:                   dataSource
+     ********************************************-->
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+
+    <!--*****************************************
+     *@BeanName:           sessionpool
+     *@Description:          会话池
+     *@Inject:
+     ********************************************-->
+    <bean id="sessionpool" class="com.offke.core.bus.auth.session.Sessionpool">
+        <property name="sessionFactory" ref="sessionFactory"/>
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!--*****************************************
+     *@BeanName:          servicemix
+     *@Description:          交易报务总线
+     *@Inject:
+     ********************************************-->
+    <bean id="servicemix" class="com.offke.core.bus.mix.Servicemix">
+        <property name="security">
+            <list>
+                <ref local="sessionpool"/>
+            </list>
+        </property>
+    </bean>
+
+    <!--*****************************************
+     *@BeanName:          servicecmix
+     *@Description:          服务总线拦截环绕通知
+     *@Inject:
+     ********************************************-->
+    <bean id="servicecmix" class="com.offke.core.bus.mix.Servicecmix">
+        <property name="serviceMixAfter" ref="serviceamix"/>
+        <property name="serviceMixBefore" ref="servicebmix"/>
+    </bean>
+
+    <!--*****************************************
+     *@BeanName:          serviceMixAroundAdvisor
+     *@Description:
+     *@Inject:                   advice
+     *@                            pattern
+     ********************************************-->
+    <bean id="servicecmixadvisor" class="org.springframework.aop.support.RegexpMethodPointcutAdvisor">
+        <property name="advice">
+            <ref local="servicecmix"/>
+        </property>
+        <property name="pattern" value=".*"/>
+    </bean>
+
+    <!--*****************************************
+     *@BeanName:          serviceMixBean
+     *@Description:          流程主控实现
+     *@Inject:                   proxyInterfaces
+     *@                            target
+     *@                            interceptorNames
+     ********************************************-->
+    <bean id="serviceMixBean" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="proxyInterfaces" value="com.offke.core.bus.mix.IServicemix"/>
+        <property name="target">
+            <ref local="servicemix"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>servicecmixadvisor</value>
+            </list>
+        </property>
+    </bean>
+
+    <!--*****************************************
+     *@BeanName:          servicebmix
+     *@Description:          接收报文处理
+     *@Inject:
+     ********************************************-->
+    <bean id="servicebmix" class="com.offke.core.bus.mix.Servicebmix">
+        <property name="defaultUnpack" ref="jsondefaultunpack"/>
+    </bean>
+
+    <!--*****************************************
+     *@BeanName:          serviceamix
+     *@Description:          发送报文处理
+     *@Inject:
+     ********************************************-->
+    <bean id="serviceamix" class="com.offke.core.bus.mix.Serviceamix">
+        <property name="defaultPack" ref="jsondefaultpack"/>
+    </bean>
+
+</beans>

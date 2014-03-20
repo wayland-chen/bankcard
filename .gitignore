@@ -1,9 +1,24 @@
-.gradle
-.idea
 *.class
 *.iml
+*.ipr
+*.iws
+.classpath
+.project
+*.log
 
 # Package Files #
 *.jar
 *.war
 *.ear
+.idea
+.settings
+target
+
+#gradle #
+.gradle
+gradle
+gradlew
+gradlew.bat
+
+#c sharp and cpp
+obj

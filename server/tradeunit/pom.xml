@@ -1,0 +1,47 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.offke.platform</groupId>
+    <artifactId>tradeunit</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>tradeunit</name>
+    <description>all trade units</description>
+    <url>http://www.offke.com</url>
+    <distributionManagement>
+        <repository>
+            <id>nexus-releases</id>
+            <url>http://nexus.wisdragon.com/nexus/content/repositories/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus-snapshots</id>
+            <url>http://nexus.wisdragon.com/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <site>
+            <id>www.offke.com</id>
+            <url>scp://www.offke.com/</url>
+        </site>
+    </distributionManagement>
+    <properties>
+        <encoding.type>UTF-8</encoding.type>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>com.offke.platform</groupId>
+            <artifactId>servercore</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.offke.platform</groupId>
+            <artifactId>bankpo</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+</project>
